@@ -1,110 +1,89 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yearly Workout Calendar</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-        }
+import React, { useState } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
-        table {
-            margin: 20px auto;
-            border-collapse: collapse;
-            width: 90%;
-        }
+const WorkoutCalendar = () => {
+  const [workoutDays, setWorkoutDays] = useState(new Set());
+  
+  // Generate months and days for 2024
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  
+  const getDaysInMonth = (month) => {
+    return new Date(2024, month + 1, 0).getDate();
+  };
 
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: center;
-        }
+  const isToday = (month, day) => {
+    const today = new Date();
+    return today.getFullYear() === 2024 &&
+           today.getMonth() === month &&
+           today.getDate() === day;
+  };
 
-        th {
-            background-color: #f4f4f4;
-            position: sticky;
-            top: 0;
-        }
+  const toggleWorkout = (date) => {
+    const newWorkoutDays = new Set(workoutDays);
+    if (newWorkoutDays.has(date)) {
+      newWorkoutDays.delete(date);
+    } else {
+      newWorkoutDays.add(date);
+    }
+    setWorkoutDays(newWorkoutDays);
+  };
 
-        .workout-button {
-            cursor: pointer;
-            padding: 5px 10px;
-            background-color: #ccc;
-            border: none;
-            border-radius: 5px;
-        }
+  // Get the day of week (0-6) for the first day of each month
+  const getFirstDayOfMonth = (month) => {
+    return new Date(2024, month, 1).getDay();
+  };
 
-        .workout-button:hover {
-            background-color: #bbb;
-        }
+  return (
+    <div className="max-w-7xl mx-auto p-4">
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="text-2xl text-center">2024 Workout Tracker</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {months.map((month, monthIndex) => (
+              <div key={month} className="border rounded-lg p-4">
+                <h3 className="text-lg font-bold mb-2 text-center">{month}</h3>
+                <div className="grid grid-cols-7 gap-1 text-center text-sm mb-1">
+                  {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                    <div key={day} className="font-medium">{day}</div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-7 gap-1">
+                  {[...Array(getFirstDayOfMonth(monthIndex))].map((_, i) => (
+                    <div key={`empty-${i}`} className="h-8" />
+                  ))}
+                  {[...Array(getDaysInMonth(monthIndex))].map((_, i) => {
+                    const day = i + 1;
+                    const date = `2024-${(monthIndex + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+                    const hasWorkout = workoutDays.has(date);
+                    const isCurrentDay = isToday(monthIndex, day);
+                    
+                    return (
+                      <button
+                        key={day}
+                        onClick={() => toggleWorkout(date)}
+                        className={`h-8 rounded-full flex items-center justify-center text-sm
+                          ${hasWorkout ? 'bg-green-500 text-white hover:bg-green-600' : 
+                            'hover:bg-gray-100 border'}
+                          ${isCurrentDay ? 'border-2 border-blue-500' : ''}
+                        `}
+                      >
+                        {day}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
 
-        .completed {
-            background-color: #8bc34a !important;
-            color: white;
-        }
-
-    </style>
-</head>
-<body>
-    <h1>Yearly Workout Calendar</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Workout Status</th>
-            </tr>
-        </thead>
-        <tbody id="calendar-body">
-            <!-- Calendar rows will be populated here -->
-        </tbody>
-    </table>
-
-    <script>
-        function createCalendar() {
-            const calendarBody = document.getElementById("calendar-body");
-            const today = new Date();
-            const year = today.getFullYear();
-
-            for (let month = 0; month < 12; month++) {
-                const monthDate = new Date(year, month, 1);
-                const monthName = monthDate.toLocaleString('default', { month: 'long' });
-                const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-                const monthRow = document.createElement("tr");
-                const monthHeader = document.createElement("td");
-                monthHeader.colSpan = 2;
-                monthHeader.style.fontWeight = "bold";
-                monthHeader.textContent = monthName;
-                monthRow.appendChild(monthHeader);
-                calendarBody.appendChild(monthRow);
-
-                for (let day = 1; day <= daysInMonth; day++) {
-                    const dateRow = document.createElement("tr");
-
-                    const dateCell = document.createElement("td");
-                    dateCell.textContent = `${day} ${monthName}, ${year}`;
-                    dateRow.appendChild(dateCell);
-
-                    const actionCell = document.createElement("td");
-                    const button = document.createElement("button");
-                    button.textContent = "Mark as Done";
-                    button.className = "workout-button";
-                    button.addEventListener("click", () => {
-                        dateRow.classList.toggle("completed");
-                        button.disabled = true;
-                        button.textContent = "Completed";
-                    });
-                    actionCell.appendChild(button);
-                    dateRow.appendChild(actionCell);
-
-                    calendarBody.appendChild(dateRow);
-                }
-            }
-        }
-
-        createCalendar();
-    </script>
-</body>
-</html>
+export default WorkoutCalendar;
